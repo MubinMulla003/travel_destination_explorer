@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wanderly — Travel Explorer</title>
+<meta name="description" content="Search any city on Earth and discover its weather, sunrise and sunset, and nearby places to see — built on real open data." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="logo" href="#top">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40" width="28" height="28">
+          <circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M20 3 L23 17 L37 20 L23 23 L20 37 L17 23 L3 20 L17 17 Z" fill="currentColor"/>
+        </svg>
+      </span>
+      WANDERLY
+    </a>
+
+    <nav class="main-nav" aria-label="Primary">
+      <a href="#search">Search</a>
+      <a href="#favorites">Favorites</a>
+      <a href="#history">History</a>
+      <a href="#about">About</a>
+    </nav>
+
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false">
+      <span class="theme-icon">🌙</span>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-row">
+      <div class="hero-copy">
+        <p class="hero-kicker">A field guide to anywhere</p>
+        <h1 class="hero-title">Explore the World,<br>One Destination at a Time.</h1>
+        <p class="hero-sub">Discover destinations, weather, attractions and locations using real-world data.</p>
+      </div>
+      <div class="hero-mark" aria-hidden="true">
+        <svg viewBox="0 0 220 220" class="compass">
+          <circle cx="110" cy="110" r="100" fill="none" stroke="currentColor" stroke-width="1"/>
+          <circle cx="110" cy="110" r="72" fill="none" stroke="currentColor" stroke-width="1"/>
+          <g stroke="currentColor" stroke-width="1">
+            <line x1="110" y1="8" x2="110" y2="30"/>
+            <line x1="110" y1="190" x2="110" y2="212"/>
+            <line x1="8" y1="110" x2="30" y2="110"/>
+            <line x1="190" y1="110" x2="212" y2="110"/>
+          </g>
+          <path d="M110 45 L128 108 L110 175 L92 108 Z" fill="currentColor" opacity="0.85"/>
+          <circle cx="110" cy="110" r="6" fill="var(--parchment)"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEARCH -->
+  <section class="search-section" id="search">
+    <div class="wrap">
+      <form id="search-form" class="search-card" autocomplete="off">
+        <label for="destination-input" class="visually-hidden">Search a city or destination</label>
+        <input
+          id="destination-input"
+          type="text"
+          name="destination"
+          placeholder="Search a city or destination..."
+          aria-describedby="search-error"
+        />
+        <button type="submit" class="btn btn-primary">Explore</button>
+      </form>
+      <p id="search-error" class="form-error" role="alert" hidden></p>
+
+      <div class="popular-row">
+        <span class="popular-label">Popular right now</span>
+        <div class="popular-chips" id="popular-chips">
+          <button type="button" class="chip" data-city="Paris">Paris</button>
+          <button type="button" class="chip" data-city="Tokyo">Tokyo</button>
+          <button type="button" class="chip" data-city="Marrakesh">Marrakesh</button>
+          <button type="button" class="chip" data-city="Reykjavik">Reykjavik</button>
+          <button type="button" class="chip" data-city="Cusco">Cusco</button>
+          <button type="button" class="chip" data-city="Kyoto">Kyoto</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOADING STATE -->
+  <section id="loading-state" class="loading-section" hidden>
+    <div class="wrap">
+      <div class="loading-card">
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <p>Discovering your destination…</p>
+        <div class="skeleton-row">
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ERROR STATE -->
+  <section id="error-state" class="error-section" hidden>
+    <div class="wrap">
+      <div class="error-card">
+        <p class="error-title" id="error-title">Destination not found.</p>
+        <p class="error-detail" id="error-detail">Try searching for another city or country.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DESTINATION RESULTS -->
+  <section id="results" class="results-section" hidden>
+    <div class="wrap">
+
+      <!-- Destination header -->
+      <article id="destination" class="destination-block">
+        <div class="destination-heading">
+          <h2 id="destination-name">—</h2>
+          <button id="favorite-btn" class="btn btn-ghost favorite-btn" type="button">
+            <span id="favorite-icon">🤍</span> Add to Favorites
+          </button>
+        </div>
+        <dl class="destination-meta">
+          <div><dt>Region</dt><dd id="destination-region">—</dd></div>
+          <div><dt>Latitude</dt><dd id="destination-lat">—</dd></div>
+          <div><dt>Longitude</dt><dd id="destination-lon">—</dd></div>
+          <div><dt>Timezone</dt><dd id="destination-timezone">—</dd></div>
+        </dl>
+      </article>
+
+      <div class="dash-divider" aria-hidden="true"></div>
+
+      <!-- Weather -->
+      <section id="weather" class="panel">
+        <h3 class="panel-title">Current Weather</h3>
+        <div class="weather-grid" id="weather-grid">
+          <div class="weather-hero-card">
+            <span class="weather-icon" id="weather-icon">—</span>
+            <span class="weather-temp" id="weather-temp">—</span>
+            <span class="weather-condition" id="weather-condition">—</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Wind speed</span>
+            <span class="stat-value" id="weather-wind">—</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Humidity</span>
+            <span class="stat-value" id="weather-humidity">—</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sunrise / Sunset -->
+      <section id="sun" class="panel">
+        <h3 class="panel-title">Sunrise &amp; Sunset</h3>
+        <div class="sun-grid">
+          <div class="stat-card">
+            <span class="stat-label">🌅 Sunrise</span>
+            <span class="stat-value" id="sunrise-time">—</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">🌇 Sunset</span>
+            <span class="stat-value" id="sunset-time">—</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Forecast -->
+      <section id="forecast" class="panel">
+        <h3 class="panel-title">7-Day Forecast</h3>
+        <div class="forecast-row" id="forecast-row">
+          <!-- forecast day cards injected by JS -->
+        </div>
+      </section>
+
+      <!-- Attractions -->
+      <section id="attractions" class="panel">
+        <h3 class="panel-title">Nearby Places</h3>
+        <p class="panel-sub" id="attractions-status">Looking for places worth seeing…</p>
+        <div class="places-grid" id="places-grid"></div>
+      </section>
+
+      <!-- Map -->
+      <section id="map-section" class="panel">
+        <h3 class="panel-title">Map</h3>
+        <div id="map" class="map-canvas"></div>
+      </section>
+
+    </div>
+  </section>
+
+  <!-- FAVORITES -->
+  <section id="favorites" class="list-section">
+    <div class="wrap">
+      <h2 class="section-title">Favorites</h2>
+      <p class="section-sub">Places you've saved for later. Stored right in this browser.</p>
+      <div id="favorites-list" class="tag-list">
+        <p class="empty-note" id="favorites-empty">No favorites yet — explore a destination and add it here.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
+  <section id="history" class="list-section alt">
+    <div class="wrap">
+      <div class="history-heading">
+        <h2 class="section-title">Recent Searches</h2>
+        <button id="clear-history" class="btn btn-ghost btn-small" type="button">Clear History</button>
+      </div>
+      <div id="history-list" class="tag-list">
+        <p class="empty-note" id="history-empty">Your last searches will show up here.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-row">
+    <div>
+      <span class="logo footer-logo">WANDERLY</span>
+      <p class="footer-tagline">Explore the world, one destination at a time.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
