@@ -181,3 +181,7 @@ Places" section shows a plain message instead of breaking the page.
 - User accounts to sync favorites across devices
 - Multi‑day travel itinerary planner
 - AI‑powered travel recommendations based on saved favorites
+
+## Output 
+
+https://mubinmulla003.github.io/travel_destination_explorer/
